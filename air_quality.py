@@ -1,6 +1,6 @@
 ##Date;Time;CO(GT);PT08.S1(CO);NMHC(GT);C6H6(GT);PT08.S2(NMHC);NOx(GT);PT08.S3(NOx);NO2(GT);PT08.S4(NO2);PT08.S5(O3);T;RH;AH;;
 
-from typing import Tuple
+from typing import Tuple, List
 from neural import *
 from sklearn.model_selection import train_test_split
 
@@ -28,18 +28,15 @@ def normalize(data: List[Tuple[List[float], List[float]]]):
             data[i][0][j] = (data[i][0][j] - leasts[j]) / (mosts[j] - leasts[j])
     return data
 
-with open("AirQualityUCI.txt", "r") as f:
-    training_data = [parse_line(line) for line in f.readlines() if len(line) > 4]
+with open("AirQualityUCI.txt", "r") as file:
+    training_data = [parse_line(line) for line in file.readlines() if len(line) > 4]
 
-td = normalize(training_data)
-print(td[0])
-print(len(td))
+training_data = normalize(training_data)
+train_data, test_data = train_test_split(training_data, test_size=0.25)
 
-nn = NeuralNet(11, 0, 2)
+nn = NeuralNet(10, 5, 2)
+nn.train(train_data, iters=5000, print_interval=500)
 
-train_data, test_data = train_test_split(td)
-# print(len(train_data))
-# print(len(test_data))
-# print(test_data)
-
-nn.train(train_data, iters=1000, print_interval=100)
+for i in nn.test_with_expected(test_data):
+    difference = round(abs(i[1][0] - i[2][0]), 4)
+    print(f"desired: {i[1]}, actual: {i[2]}, diff: {difference}")
